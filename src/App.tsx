@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+export const sampleFormSchema = z.object({
+  input: z.string().nonempty({
+    message: "inputは必須です",
+  }),
+  select: z.string().nonempty({
+    message: "selectは必須です",
+  }),
+});
 
 function App() {
-  const [count, setCount] = useState(0)
+  const methods = useForm({
+    resolver: zodResolver(sampleFormSchema), //zodResolverでスキーマを指定
+  });
+  const { handleSubmit } = methods;
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit((data) => console.log(data))}>
+        <InputField name='input' />
+        <SelectField name='select' />
+        <button type='submit'>Submit</button>
+      </form>
+    </FormProvider>
+  );
+}
+type Props = {
+  name: string;
+};
+
+function SelectField(props: Props) {
+  const methods = useFormContext();
+  return (
+    <>
+      <select {...methods.register(props.name)}>
+        {["", "one", "two", "three"].map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+
+      {methods.formState.errors[props.name] && (
+        <p>{methods.formState.errors[props.name]?.message as string}</p>
+      )}
+    </>
+  );
+}
+
+function InputField(props: Props) {
+  const methods = useFormContext();
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <input {...methods.register(props.name)} />
+      {methods.formState.errors[props.name] && (
+        <p>{methods.formState.errors[props.name]?.message as string}</p>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
